@@ -3,12 +3,12 @@
     "index": {
       "js": [
         "runtime.js",
-        "32fb8c1dadf77785ccfa.js",
-        "d8b540c4ad38a7e1d910.js"
+        "8f8045ed99f21bb7fdeb.js",
+        "c8a03f749881673fb590.js"
       ]
     }
   },
-  "index.js": "d8b540c4ad38a7e1d910.js",
+  "index.js": "c8a03f749881673fb590.js",
   "runtime.js": "runtime.js",
-  "vendors~index.js": "32fb8c1dadf77785ccfa.js"
+  "vendors~index.js": "8f8045ed99f21bb7fdeb.js"
 }
