@@ -1,0 +1,14 @@
+{
+  "entrypoints": {
+    "index": {
+      "js": [
+        "runtime.js",
+        "32fb8c1dadf77785ccfa.js",
+        "d8b540c4ad38a7e1d910.js"
+      ]
+    }
+  },
+  "index.js": "d8b540c4ad38a7e1d910.js",
+  "runtime.js": "runtime.js",
+  "vendors~index.js": "32fb8c1dadf77785ccfa.js"
+}

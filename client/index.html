@@ -1,0 +1,20 @@
+<html>
+	<head>
+	</head>
+	<body>
+		<div>Temperature: <span></span></div>
+		<div>Up time: </div>
+		<div>
+			WiFi
+			<div>
+				<script>
+					fetch("/api/v1/wifi/list").then(function(data) {
+						return data.json();
+					}).then(function(data) {
+						console.log(data);
+					});
+				</script>
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,18 @@
+{
+	"path": "",
+	"common": {
+		"js": [
+			"runtime.js",
+			"32fb8c1dadf77785ccfa.js",
+			"d8b540c4ad38a7e1d910.js"
+		],
+		"css": []
+	},
+	"entries": {
+		"index": {
+			"js": [],
+			"lib": []
+		}
+	},
+	"others": []
+}
