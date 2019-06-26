@@ -4,6 +4,7 @@
 			<Wifi class="client-menu-wifi"></Wifi>
 		</div>
 		<div class="client-body">
+			<Proxy class="client-body-proxy" @error="handleError"></Proxy>
 		</div>
 	</div>
 </template>
@@ -12,15 +13,21 @@
 	"use strict"
 
 	import Wifi from "./wifi.vue";
+	import Proxy from "./proxy.vue";
 
 	export default {
 		components: {
-			Wifi
+			Wifi, Proxy
 		},
 		data: function() {
 			return {};
 		},
 		computed: {
+		},
+		methods: {
+			handleError(e) {
+				console.error(e);
+			}
 		}
 	}
 </script>
@@ -28,6 +35,11 @@
 <style lang="scss">
 	@import "[client]/style/style.scss";
 	@import "[client]/style/config.scss";
+
+	html, body {
+		width: 100%;
+		height: 100%;
+	}
 
 	.client-wrapper {
 		width: 100%;
@@ -48,6 +60,11 @@
 		.client-body {
 			width: 100%;
 			height: calc(100% - 64px);
+
+			.client-body-proxy {
+				width: 100%;
+				height: 100%;
+			}
 		}
 	}
 </style>
