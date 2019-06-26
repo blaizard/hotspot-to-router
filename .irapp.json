@@ -1,0 +1,11 @@
+{
+	"start": {
+		"dev": [
+			"runAsync npm run client-dev",
+			"run npm run server"
+		],
+		"build-prod": [
+			"run npm run client-prod"
+		]
+	}
+}

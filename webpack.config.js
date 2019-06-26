@@ -8,6 +8,9 @@ let config = {
 	},
 	output: Path.resolve(__dirname, "www/"),
 	publicPath: "",
+	alias: {
+		"[client]": Path.resolve(__dirname, "client")
+	},
 	hooks: {
 		manifest: async (manifest, config) => {
 			// Generate the templates of the entry points

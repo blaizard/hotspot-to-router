@@ -6,7 +6,9 @@
         "npm": "^6.8.0", 
         "helmet": "^3.15.1", 
         "fs": "0.0.1-security", 
-        "http": "0.0.0", 
+        "http": "0.0.0",
+        "http-proxy": "latest",
+        "https": "latest", 
         "compression": "^1.7.3", 
         "express-minify": "^1.0.0", 
         "express": "^4.16.3", 
@@ -40,6 +42,7 @@
 		"webpack-dev-server": "^3.2.1"
 	},
     "scripts": {
+        "server": "node index.js",
         "client-prod": "webpack --mode=production --config webpack.config.js", 
         "client-dev": "webpack --config webpack.config.js"
     }
