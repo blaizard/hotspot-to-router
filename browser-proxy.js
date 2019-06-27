@@ -24,6 +24,8 @@ module.exports = class BrowserProxy {
 
         this.browser = await Puppeteer.launch();
         this.page = await this.browser.newPage();
+        this.width = 0;
+        this.height = 0;
 
         this.event.trigger("ready");
 
@@ -39,10 +41,28 @@ module.exports = class BrowserProxy {
 		return this.event.waitUntil("ready");
     }
 
-    async screenshot() {
+	async setViewport(width, height) {
         Exception.assert(this.event.is("ready"), "Module is not ready");
 
-        return await this.page.screenshot({});
+        if (this.width != width || this.height != height) {
+            await this.page.setViewport({ width: width, height: height });
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    async screenshot(config) {
+        Exception.assert(this.event.is("ready"), "Module is not ready");
+
+        config = Object.assign({
+            type: "png"
+        }, config);
+
+        return await this.page.screenshot({
+            type: config.type,
+            quality: 20,
+            encoding: "binary"
+        });
     }
 
     async goto(url) {
@@ -55,5 +75,11 @@ module.exports = class BrowserProxy {
         Exception.assert(this.event.is("ready"), "Module is not ready");
 
         await this.page.mouse.click(x, y);
+    }
+
+    async press(key) {
+        Exception.assert(this.event.is("ready"), "Module is not ready");
+
+        await this.page.keyboard.press(key);
     }
 }

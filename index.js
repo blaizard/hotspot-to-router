@@ -26,11 +26,17 @@ browser.start();
 
 web.addRoute("get", "/api/v1/proxy/screenshot", async (request, response) => {
 
-	response.setHeader("Content-Type", "image/png");
+	const width = parseInt(request.query.width) || 800;
+	const height = parseInt(request.query.height) || 600;
+
+	await browser.setViewport(width, height);
+
+	const buffer = await browser.screenshot({
+		type: "jpeg"
+	});
+
+	response.setHeader("Content-Type", "image/jpeg");
 	response.status(200);
-
-	const buffer = await browser.screenshot();
-
 	response.write(buffer,"binary");
     response.end(null, "binary");
 }, undefined, { exceptionGuard: true });
@@ -41,6 +47,14 @@ web.addRoute("get", "/api/v1/proxy/click", async (request, response) => {
 	const y = parseInt(request.query.y);
 
 	await browser.click(x, y);
+	response.sendStatus(200);
+}, undefined, { exceptionGuard: true });
+
+web.addRoute("get", "/api/v1/proxy/press", async (request, response) => {
+
+	const key = request.query.key;
+
+	await browser.press(key);
 	response.sendStatus(200);
 }, undefined, { exceptionGuard: true });
 

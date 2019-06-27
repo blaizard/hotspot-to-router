@@ -1,15 +1,19 @@
 <template>
     <div class="proxy">
         <div class="proxy-toolbar">
-            <input class="proxy-toolbar-url" ref="url" type="text" @change="handleUrlChange" />
+            <input class="proxy-toolbar-url" ref="url" type="text" placeholder="Type url here..." @change="handleUrlChange" />
             <input class="proxy-toolbar-send" type="button" value="OK" @click="handleUrlChange" />
         </div>
-	    <img class="proxy-screen" ref="screen" :src="image.src" @click="handleClick($event)" />
+        <div class="proxy-wrapper" ref="container">
+	        <img class="proxy-screen" ref="screen" tabindex="0" :src="image.src" @click="handleClick($event)" @keydown="handleKeydown($event)" />
+        </div>
     </div>
 </template>
 
 <script>
 	"use strict"
+
+    import Url from "url";
 
 	export default {
 		data: function() {
@@ -51,7 +55,8 @@
             fetchScreenshot() {
                 clearTimeout(this.timeout);
                 let image = new Image();
-                image.src = "/api/v1/proxy/screenshot?uid=" + (Date.now());
+                const rect = this.$refs.container.getBoundingClientRect();
+                image.src = "/api/v1/proxy/screenshot?uid=" + (Date.now()) + "&width=" + rect.width + "&height=" + rect.height;
                 image.onload = () => {
                     this.image = image;
                     this.timeout = setTimeout(this.fetchScreenshot, this.refreshRateMs);
@@ -70,9 +75,32 @@
                 const coord = this.getCoordinatesFromEvent(e);
                 this.fetch("click", coord);
             },
+            handleKeydown(e) {
+                console.log(e.key, e);
+                this.fetch("press", {
+                    key: String(e.key)
+                });
+            },
+            cleanUrl(url) {
+                let parsedUrl = Url.parse(url);
+                parsedUrl.protocol = parsedUrl.protocol || "http";
+                parsedUrl.slashes = parsedUrl.slashes || "//";
+                delete parsedUrl.path;
+                delete parsedUrl.href;
+
+                let pathnameList = parsedUrl.pathname.split("/").filter((entry) => Boolean(entry));
+                if (!parsedUrl.hostname) {
+                    parsedUrl.hostname = pathnameList.shift();
+                }
+                parsedUrl.pathname = pathnameList.join("/");
+
+                return Url.format(parsedUrl);
+            },
             handleUrlChange() {
+                const url = this.cleanUrl(this.$refs.url.value);
+                this.$refs.url.value = url;
                 this.fetch("goto", {
-                    url: this.$refs.url.value
+                    url: url
                 });
             }
         }
@@ -92,13 +120,30 @@
             .proxy-toolbar-url {
                 flex: 2;
             }
+
+            .proxy-toolbar-url,
+            .proxy-toolbar-send {
+                border: 1px solid #777;
+                padding: 5px 10px;
+                line-height: 18px;
+                font-size: 18px;
+            }
         }
 
-        .proxy-screen {
+        .proxy-wrapper {
+
             margin: 0;
             padding: 0;
             border: none;
             width: 100%;
+            height: calc(100% - 48px);
+            overflow: hidden;
+
+            .proxy-screen {
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
         }
     }
 </style>

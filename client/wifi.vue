@@ -64,7 +64,7 @@
                 });
             }
         }
-	}
+    }
 </script>
 
 <style lang="scss">

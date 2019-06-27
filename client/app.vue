@@ -6,6 +6,7 @@
 		<div class="client-body">
 			<Proxy class="client-body-proxy" @error="handleError"></Proxy>
 		</div>
+		<Error class="client-error" :error="error"></Error>
 	</div>
 </template>
 
@@ -14,19 +15,22 @@
 
 	import Wifi from "./wifi.vue";
 	import Proxy from "./proxy.vue";
+	import Error from "./error.vue";
 
 	export default {
 		components: {
-			Wifi, Proxy
+			Wifi, Proxy, Error
 		},
 		data: function() {
-			return {};
+			return {
+				error: null
+			}
 		},
 		computed: {
 		},
 		methods: {
 			handleError(e) {
-				console.error(e);
+				this.error = e;
 			}
 		}
 	}
@@ -46,6 +50,7 @@
 		height: 100%;
 		margin: 0;
 		padding: 0;
+		position: relative;
 
 		.client-menu {
 			width: 100%;
@@ -65,6 +70,12 @@
 				width: 100%;
 				height: 100%;
 			}
+		}
+
+		.client-error {
+			position: absolute;
+			bottom: 0;
+			width: 100%;
 		}
 	}
 </style>
