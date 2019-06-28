@@ -1,21 +1,22 @@
 <template>
-	<div class="wifi">
-        <div class="wifi-status">Wifi</div>
-        <div class="wifi-menu">
-            <div v-if="stateLoading" class="wifi-menu-element">Scanning...</div>
-            <div v-else-if="stateError" class="wifi-menu-element">Error: {{ error }}</div>
+    <Module class="wifi" title="Wifi">
+        <template v-slot:body>
+            <div v-if="stateLoading" class="module-body-list">Scanning...</div>
+            <div v-else-if="stateError" class="module-body-list">Error: {{ error }}</div>
             <template v-else-if="stateData">
-                <div v-for="network in networkList" class="wifi-menu-element">
+                <div v-for="network in networkList" class="module-body-list">
                     {{ network.ssid }}
                 </div>
             </template>
-            <div v-else class="wifi-menu-element">No Network</div>
-        </div>
-	</div>
+            <div v-else class="module-body-list">No Network</div>
+        </template>
+	</Module>
 </template>
 
 <script>
 	"use strict"
+
+    import Module from "./module.vue";
 
 	export default {
 		data: function() {
@@ -25,6 +26,9 @@
                 error: null
             };
 		},
+        components: {
+            Module
+        },
         mounted() {
             this.fetchNetworkList();
         },
@@ -68,27 +72,6 @@
 </script>
 
 <style lang="scss">
-	@import "[client]/style/config.scss";
-
     .wifi {
-        position: relative;
-
-        .wifi-status {
-            width: #{$client-menu-height}px;
-            height: #{$client-menu-height}px;
-            line-height: #{$client-menu-height}px;
-            padding: 0 10px;
-        }
-        .wifi-menu {
-            position: absolute;
-
-            top: #{$client-menu-height}px;
-            right: 0;
-
-            .wifi-menu-element {
-                padding: 4px 10px;
-                white-space: nowrap;
-            }
-        }
     }
 </style>

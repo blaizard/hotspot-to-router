@@ -15,12 +15,17 @@ module.exports = class BrowserProxy {
         this.page = null;
 
         this.event = new Event({
-            ready: {proactive: true}
+            ready: {proactive: true},
+            // Page goto error
+            error: {proactive: true}
         });
     }
 
     async start() {
         Exception.assert(this.browser === null && this.page === null);
+
+        // Clear all events
+        this.event.clear();
 
         this.browser = await Puppeteer.launch();
         this.page = await this.browser.newPage();
@@ -29,7 +34,7 @@ module.exports = class BrowserProxy {
 
         this.event.trigger("ready");
 
-        await this.goto('https://www.mikewesthad.com/twine-resources/demos/animate.css/example.html');
+        await this.goto('http://www.google.com');
     }
 
     async stop() {
@@ -43,6 +48,7 @@ module.exports = class BrowserProxy {
 
 	async setViewport(width, height) {
         Exception.assert(this.event.is("ready"), "Module is not ready");
+        Exception.assert(!this.event.is("error"), "Page has error");
 
         if (this.width != width || this.height != height) {
             await this.page.setViewport({ width: width, height: height });
@@ -51,8 +57,19 @@ module.exports = class BrowserProxy {
         }
     }
 
+    async selectPage(index) {
+        Exception.assert(this.event.is("ready"), "Module is not ready");
+
+        const pages = await this.browser.pages();
+
+        Exception.assert(index >= 0 && index < pages.length, "Page requested is out of bound");
+
+        this.page = pages[index];
+    }
+
     async screenshot(config) {
         Exception.assert(this.event.is("ready"), "Module is not ready");
+        Exception.assert(!this.event.is("error"), "Page has error");
 
         config = Object.assign({
             type: "png"
@@ -68,18 +85,63 @@ module.exports = class BrowserProxy {
     async goto(url) {
         Exception.assert(this.event.is("ready"), "Module is not ready");
 
-        await this.page.goto(url);
+        this.event.clear("error");
+        try {
+            await this.page.goto(url, {
+                timeout: 30000,
+                waitUntil: "domcontentloaded"
+            });
+        }
+        catch (e) {
+            this.event.trigger("error");
+            throw e;
+        }
     }
 
     async click(x, y) {
         Exception.assert(this.event.is("ready"), "Module is not ready");
+        Exception.assert(!this.event.is("error"), "Page has error");
 
         await this.page.mouse.click(x, y);
     }
 
     async press(key) {
         Exception.assert(this.event.is("ready"), "Module is not ready");
+        Exception.assert(!this.event.is("error"), "Page has error");
 
         await this.page.keyboard.press(key);
+    }
+
+    /**
+     * Get the current status of the browser
+     */
+    async getStatus() {
+
+        // Get all open pages title
+        const pageList = await this.browser.pages();
+
+        const index = pageList.findIndex((page) => (this.page === page))
+
+        let pageTitleList = [];
+        for (const i in pageList) {
+            pageTitleList.push(await pageList[i].title());
+        }
+
+        const dimensions = await this.page.evaluate(() => {
+            return {
+                width: document.width || document.body.offsetWidth,
+                height: document.height || document.body.offsetHeight
+            }
+        });
+
+        return {
+            viewportWidth: this.width,
+            viewportHeight: this.height,
+            width: dimensions.width,
+            height: dimensions.height,
+            pages: pageTitleList,
+            index: index,
+            url: this.page.url()
+        }
     }
 }

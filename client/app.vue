@@ -55,7 +55,8 @@
 		.client-menu {
 			width: 100%;
 			height: #{$client-menu-height}px;
-			background-color: #eee;
+			color: $client-menu-color;
+			background-color: $client-menu-background-color;
 
 			.client-menu-wifi {
 				float: right;

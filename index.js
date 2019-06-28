@@ -66,4 +66,19 @@ web.addRoute("get", "/api/v1/proxy/goto", async (request, response) => {
 	response.sendStatus(200);
 }, undefined, { exceptionGuard: true });
 
+web.addRoute("get", "/api/v1/proxy/select", async (request, response) => {
+
+	const index = parseInt(request.query.index);
+
+	await browser.selectPage(index);
+	response.sendStatus(200);
+}, undefined, { exceptionGuard: true });
+
+web.addRoute("get", "/api/v1/proxy/status", async (request, response) => {
+
+	const status = await browser.getStatus();
+	console.log(status);
+	response.json(status);
+}, undefined, { exceptionGuard: true });
+
 web.start();

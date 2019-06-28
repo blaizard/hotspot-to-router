@@ -1,5 +1,8 @@
 <template>
     <div class="proxy">
+        <div class="proxy-tabs">
+            <div v-for="tab, index in tabList" :class="getProxyTabClass(index)" @click="selectPage(index)">{{ tab || "No title" }}</div>
+        </div>
         <div class="proxy-toolbar">
             <input class="proxy-toolbar-url" ref="url" type="text" placeholder="Type url here..." @change="handleUrlChange" />
             <input class="proxy-toolbar-send" type="button" value="OK" @click="handleUrlChange" />
@@ -20,11 +23,14 @@
 			return {
                 refreshRateMs: 100,
                 image: new Image(),
-                timeout: null
+                timeoutScreenshot: null,
+                timeoutStatus: null,
+                tabList: [],
+                tabIndex: 0
             };
 		},
         mounted() {
-            this.fetchScreenshot();
+            this.startMonitoring();
         },
 		computed: {
             screenshotWidth() {
@@ -35,6 +41,16 @@
             }
 		},
         methods: {
+            startMonitoring() {
+                this.fetchStatus();
+                this.fetchScreenshot();
+            },
+            getProxyTabClass(index) {
+                return {
+                    "proxy-tab": true,
+                    "proxy-tab-active": (this.tabIndex == index)
+                }
+            },
             async fetch(action, args) {
                 let argList = [];
                 for (const key in args) {
@@ -46,29 +62,47 @@
                     if (!response.ok) {
                         throw Error((await response.text()) || response.statusText);
                     }
-                    await response.text();
+                    return response;
+                }
+                catch (e) {
+                    this.$emit("error", e);
+                }
+            },
+            async fetchStatus() {
+                clearTimeout(this.timeoutStatus);
+                const response = await this.fetch("status");
+                try {
+                    const status = await response.json();
+                    // Only update if it does not have the focus
+                    if (document.activeElement !== this.$refs.url) {
+                        this.$refs.url.value = status.url;
+                    }
+                    this.tabList = status.pages;
+                    this.tabIndex = status.index;
+                    this.timeoutStatus = setTimeout(this.fetchStatus, 1000);
                 }
                 catch (e) {
                     this.$emit("error", e);
                 }
             },
             fetchScreenshot() {
-                clearTimeout(this.timeout);
+                clearTimeout(this.timeoutScreenshot);
                 let image = new Image();
                 const rect = this.$refs.container.getBoundingClientRect();
                 image.src = "/api/v1/proxy/screenshot?uid=" + (Date.now()) + "&width=" + rect.width + "&height=" + rect.height;
                 image.onload = () => {
                     this.image = image;
-                    this.timeout = setTimeout(this.fetchScreenshot, this.refreshRateMs);
+                    this.timeoutScreenshot = setTimeout(this.fetchScreenshot, this.refreshRateMs);
                 }
             },
             getCoordinatesFromEvent(e) {
                 const rect = this.$refs.screen.getBoundingClientRect();
                 const coord = (e.touches && e.touches.length) ? {x: e.touches[0].pageX, y: e.touches[0].pageY} : {x: e.pageX, y: e.pageY};
+                const scroll = {x: window.pageXOffset || document.documentElement.scrollLeft, y: window.pageYOffset || document.documentElement.scrollTop};
 
                 return {
-                    x: Math.round((coord.x - rect.x) * this.screenshotWidth / rect.width),
-                    y: Math.round((coord.y - rect.y) * this.screenshotHeight / rect.height)
+                    x: Math.round((coord.x - rect.x - scroll.x) * this.screenshotWidth / rect.width),
+                    y: Math.round((coord.y - rect.y - scroll.y) * this.screenshotHeight / rect.height)
                 };
             },
             handleClick(e) {
@@ -76,9 +110,13 @@
                 this.fetch("click", coord);
             },
             handleKeydown(e) {
-                console.log(e.key, e);
                 this.fetch("press", {
                     key: String(e.key)
+                });
+            },
+            selectPage(index) {
+                this.fetch("select", {
+                    index: index
                 });
             },
             cleanUrl(url) {
@@ -88,7 +126,7 @@
                 delete parsedUrl.path;
                 delete parsedUrl.href;
 
-                let pathnameList = parsedUrl.pathname.split("/").filter((entry) => Boolean(entry));
+                let pathnameList = (parsedUrl.pathname || "").split("/").filter((entry) => Boolean(entry));
                 if (!parsedUrl.hostname) {
                     parsedUrl.hostname = pathnameList.shift();
                 }
@@ -96,12 +134,13 @@
 
                 return Url.format(parsedUrl);
             },
-            handleUrlChange() {
+            async handleUrlChange() {
                 const url = this.cleanUrl(this.$refs.url.value);
                 this.$refs.url.value = url;
-                this.fetch("goto", {
+                await this.fetch("goto", {
                     url: url
                 });
+                this.startMonitoring();
             }
         }
 	}
@@ -112,6 +151,28 @@
         margin: 0;
         padding: 0;
         border: none;
+
+        .proxy-tabs {
+            display: flex;
+            flex-flow: row nowrap;
+
+            .proxy-tab {
+                border: 1px solid #777;
+                border-bottom: none;
+                padding: 5px 10px;
+                line-height: 18px;
+                font-size: 18px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                color: #999;
+                cursor: pointer;
+
+                &.proxy-tab-active {
+                    color: #000;
+                }
+            }
+        }
 
         .proxy-toolbar {
             display: flex;
@@ -136,7 +197,7 @@
             padding: 0;
             border: none;
             width: 100%;
-            height: calc(100% - 48px);
+            height: calc(100% - 64px);
             overflow: hidden;
 
             .proxy-screen {
