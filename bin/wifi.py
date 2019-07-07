@@ -7,7 +7,7 @@ import re
 import json
 import argparse
 
-## git-lego dep "https://github.com/blaizard/git-lego.git" "loader.py" "master" "gitlego" 3762600802
+## git-lego dep "https://github.com/blaizard/git-lego.git" "loader.py" "master" "gitlego" 2976459722
 _gitlego121 = """#!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 
@@ -15,7 +15,7 @@ import os
 import subprocess
 import sys
 import imp
-def gitLegoLoader(command = None):
+def loader(command = None):
 	if len(sys.argv) < 2 or sys.argv[1] != "git-lego": return
 	gitLegoPath = os.path.join(os.path.realpath(os.path.expanduser("~") if os.path.expanduser("~") else os.path.dirname(__file__)), ".git-lego")
 	if not os.path.isdir(gitLegoPath): os.mkdir(gitLegoPath)
@@ -34,8 +34,58 @@ exec(_gitlego121, gitlego.__dict__)
 
 
 
-## git-lego dep "https://github.com/blaizard/python.git" "system/shell.py" "master" "shell" 1504378792
-_gitlego1211 = """#!/usr/bin/python
+
+
+
+
+
+
+
+
+
+## git-lego dep "https://github.com/blaizard/python.git" "system/which.py" "master" "system" 2964079584
+_gitlego1236 = """#!/usr/bin/python
+# -*- coding: iso-8859-1 -*-
+
+import os
+import sys
+
+\"""
+Return the path of the executable if available, None otherwise
+\"""
+def which(executable, cwd="."):
+	try:
+		\"""
+		Note, Windows will try first to look for the .exe or .cmd
+		whithin the drectory requested, hence this code path should
+		happen all the time.
+		\"""
+		if sys.platform == "win32":
+			pathList = os.environ["PATH"].split(os.pathsep)
+			# If the path is a relative path
+			if executable.find(os.path.sep):
+				pathList.insert(0, path(cwd, os.path.dirname(executable)))
+				executable = os.path.basename(executable)
+			for root in pathList:
+				for ext in [".exe", ".cmd", ""]:
+					executablePath = os.path.join(root, executable + ext).replace("/" if os.sep == "\\\\" else "\\\\", os.sep)
+					if os.path.isfile(executablePath):
+						return executablePath
+		else:
+			return shell(["which", executable], capture=True)[0]
+	except:
+		pass
+	return None
+"""
+import imp
+system = imp.new_module("system")
+system.__dict__["__file__"] = __file__
+exec(_gitlego1236, system.__dict__)
+## git-lego end
+
+
+## git-lego dep "https://github.com/blaizard/python.git" "system/shell.py" "master" "system" 3504764865
+_gitlego2436 = """#!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 
 import subprocess
@@ -146,12 +196,8 @@ def destroy():
 	return isError
 """
 import imp
-shell = imp.new_module("shell")
-shell.__dict__["__file__"] = __file__exec(_gitlego1211, shell.__dict__)
+exec(_gitlego2436, system.__dict__)
 ## git-lego end
-
-
-
 
 
 """
@@ -184,7 +230,7 @@ def actionList():
 
 if __name__ == "__main__":
 
-	gitlego.gitLegoLoader()
+	gitlego.loader()
 
 	parser = argparse.ArgumentParser(description = "Wifi command line.")
 	subparsers = parser.add_subparsers(dest="command", help="Available commands.")
