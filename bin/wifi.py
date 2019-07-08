@@ -1,20 +1,18 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
-from lib import system
-
 import sys
 import re
 import json
 import argparse
 
-## git-lego dep "https://github.com/blaizard/git-lego.git" "loader.py" "master" "gitlego" 2976459722
-_gitlego121 = """#!/usr/bin/python
+## git-lego dep "https://github.com/blaizard/git-lego.git" "loader.py" "[branch=master]" "[namespace=gitlego]" [checksum=4269232004]
+import imp
+gitlego = imp.new_module("gitlego")
+gitlego.__dict__["__file__"] = __file__
+exec("""#!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 
-import os
-import subprocess
-import sys
-import imp
+import imp, os, subprocess, sys
 def loader(command = None):
 	if len(sys.argv) < 2 or sys.argv[1] != "git-lego": return
 	gitLegoPath = os.path.join(os.path.realpath(os.path.expanduser("~") if os.path.expanduser("~") else os.path.dirname(__file__)), ".git-lego")
@@ -24,31 +22,19 @@ def loader(command = None):
 	lib = imp.load_module("lib", None, os.path.join(gitLegoDepPath, "lib"), ('', '', imp.PKG_DIRECTORY))
 	gitlego = lib.interface.Interface(__file__, cwd=gitLegoPath)
 	sys.exit(gitlego.run(command) if command else gitlego.run(sys.argv[2:]))
-"""
-import imp
-gitlego = imp.new_module("gitlego")
-gitlego.__dict__["__file__"] = __file__
-exec(_gitlego121, gitlego.__dict__)
+""", gitlego.__dict__)
 ## git-lego end
 
-
-
-
-
-
-
-
-
-
-
-
-
-## git-lego dep "https://github.com/blaizard/python.git" "system/which.py" "master" "system" 2964079584
-_gitlego1236 = """#!/usr/bin/python
+## git-lego dep "https://github.com/blaizard/python.git" "system/which.py" "[branch=master]" "[namespace=system]" [checksum=2354402845]
+import imp
+system = imp.new_module("system")
+system.__dict__["__file__"] = __file__
+exec("""#!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 
 import os
 import sys
+import subprocess
 
 \"""
 Return the path of the executable if available, None otherwise
@@ -68,24 +54,21 @@ def which(executable, cwd="."):
 				executable = os.path.basename(executable)
 			for root in pathList:
 				for ext in [".exe", ".cmd", ""]:
-					executablePath = os.path.join(root, executable + ext).replace("/" if os.sep == "\\\\" else "\\\\", os.sep)
+					executablePath = os.path.join(root, "%s%s" % (executable, ext)).replace("/" if os.sep == "\\\\" else "\\\\", os.sep)
 					if os.path.isfile(executablePath):
 						return executablePath
 		else:
-			return shell(["which", executable], capture=True)[0]
+			output = subprocess.check_output(["which", executable]).strip()
+			return output if len(output) else None
 	except:
 		pass
 	return None
-"""
-import imp
-system = imp.new_module("system")
-system.__dict__["__file__"] = __file__
-exec(_gitlego1236, system.__dict__)
+""", system.__dict__)
 ## git-lego end
 
-
-## git-lego dep "https://github.com/blaizard/python.git" "system/shell.py" "master" "system" 3504764865
-_gitlego2436 = """#!/usr/bin/python
+## git-lego dep "https://github.com/blaizard/python.git" "system/shell.py" "[branch=master]" "[namespace=system]" [checksum=1726439287]
+import imp
+exec("""#!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 
 import subprocess
@@ -194,11 +177,8 @@ def destroy():
 	for process in runningProcess:
 		isError |= (process.wait() != 0)
 	return isError
-"""
-import imp
-exec(_gitlego2436, system.__dict__)
+""", system.__dict__)
 ## git-lego end
-
 
 """
 Rescan and list all available wifi connections
