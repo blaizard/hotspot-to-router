@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 
-from lib import system
-
 import os
 import sys
 import json
@@ -36,7 +34,4 @@ if __name__ == "__main__":
 
 	print(json.dumps(data))
 
-	# Clean-up the library
-	if system.destroy():
-		sys.exit(1)
 	sys.exit(0)
