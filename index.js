@@ -21,6 +21,13 @@ web.addRoute("get", "/api/v1/wifi/list", async (request, response) => {
 	response.send(output.stdout.toString());
 }, undefined, { exceptionGuard: true });
 
+web.addRoute("get", "/api/v1/wifi/connect", async (request, response) => {
+	const ssid = request.query.ssid;
+
+	ChildProcess.spawnSync("python", ["./bin/wifi.py", "connect", ssid]);
+	response.sendStatus(200);
+}, undefined, { exceptionGuard: true });
+
 let browser = new BrowserProxy();
 browser.start();
 
@@ -77,7 +84,6 @@ web.addRoute("get", "/api/v1/proxy/select", async (request, response) => {
 web.addRoute("get", "/api/v1/proxy/status", async (request, response) => {
 
 	const status = await browser.getStatus();
-	console.log(status);
 	response.json(status);
 }, undefined, { exceptionGuard: true });
 

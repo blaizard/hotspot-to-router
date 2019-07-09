@@ -1,10 +1,10 @@
 <template>
     <Module class="wifi" title="Wifi">
-        <template v-slot:body>
+        <template v-slot:body="{ close }">
             <div v-if="stateLoading" class="module-body-list">Scanning...</div>
             <div v-else-if="stateError" class="module-body-list">Error: {{ error }}</div>
             <template v-else-if="stateData">
-                <div v-for="network in networkList" class="module-body-list">
+                <div v-for="network in networkList" class="module-body-list" @click="handleNetworkConnect(network, close)">
                     {{ network.ssid }}
                 </div>
             </template>
@@ -54,17 +54,36 @@
             }
 		},
         methods: {
-            fetchNetworkList() {
+            fetch(api, args = {}) {
+                return new Promise((resolve, reject) => {
+                    const query = Object.keys(args).map((key) => key + "=" + encodeURIComponent(args[key])).join("&");
+                    const url = api + ((query) ? ("?" + query) : "");
+                    fetch(url).then((data) => {
+                        return data.json();
+                    }).then((data) => {
+                        resolve(data);
+                    }).catch((e) => {
+                        reject(e);
+                    });
+                });
+            },
+            async fetchNetworkList() {
                 this.loading = true;
                 this.error = null;
-				fetch("/api/v1/wifi/list").then((data) => {
-					return data.json();
-				}).then((data) => {
-					this.networkList = data;
-				}).catch((e) => {
+                try {
+                    this.networkList = await this.fetch("/api/v1/wifi/list");
+                }
+                catch (e) {
                     this.error = e;
-                }).finally(() => {
+                }
+                finally {
                     this.loading = false;
+                }
+            },
+            async handleNetworkConnect(network, close) {
+                close();
+                await this.fetch("/api/v1/wifi/connect", {
+                    ssid: network.ssid
                 });
             }
         }

@@ -4,7 +4,7 @@
             <slot name="status">{{ title }}</slot>
         </div>
         <div v-show="active" ref="body" class="module-body">
-            <slot name="body"></slot>
+            <slot name="body" :close="handleClose"></slot>
         </div>
 	</div>
 </template>
@@ -30,6 +30,9 @@
                     await this.$nextTick();
                     this.repositionBody();
                 }
+            },
+            handleClose() {
+                this.active = false;
             },
             repositionBody() {
                 const rect = this.$refs.body.getBoundingClientRect();
