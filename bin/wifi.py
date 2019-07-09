@@ -208,17 +208,22 @@ def actionList():
 			})
 
 		return data
+	else:
+		raise Exception("No interface supported")
 
 """
-Rescan and list all available wifi connections
+Connect to a Wifi network
 """
 def actionConnect(ssid, password = None):
-	command = ["nmcli", "dev", "wifi", "connect", ssid]
-	if password:
-		command += ["password", password]
-	output = system.shell(command, capture=True)
-	if not re.search(r'successfully', output[0]):
-		raise Exception(output[0])
+	if system.which("nmcli"):
+		command = ["nmcli", "dev", "wifi", "connect", ssid]
+		if password:
+			command += ["password", password]
+		output = system.shell(command, capture=True)
+		if not re.search(r'successfully', output[0]):
+			raise Exception(output[0])
+	else:
+		raise Exception("No interface supported")
 
 if __name__ == "__main__":
 
