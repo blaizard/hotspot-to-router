@@ -185,7 +185,8 @@ Rescan and list all available wifi connections
 """
 def actionList():
 	if system.which("nmcli"):
-		#system.shell(["nmcli", "dev", "wifi", "rescan"])
+		# Might fail if 2 scans are done in a minimum interval
+		system.shell(["nmcli", "dev", "wifi", "rescan"], ignoreError=True)
 		output = system.shell(["nmcli", "dev", "wifi", "list"], capture=True)
 
 		ssidPos = re.search(r'(SSID\s*)', output[0]).span()
@@ -208,6 +209,17 @@ def actionList():
 
 		return data
 
+"""
+Rescan and list all available wifi connections
+"""
+def actionConnect(ssid, password = None):
+	command = ["nmcli", "dev", "wifi", "connect", ssid]
+	if password:
+		command += ["password", password]
+	output = system.shell(command, capture=True)
+	if not re.search(r'successfully', output[0]):
+		raise Exception(output[0])
+
 if __name__ == "__main__":
 
 	gitlego.loader()
@@ -215,15 +227,21 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = "Wifi command line.")
 	subparsers = parser.add_subparsers(dest="command", help="Available commands.")
 	parserRun = subparsers.add_parser("list", help="List all available Wifi.")
+	parserConnect = subparsers.add_parser("connect", help="Connect to a wifi.")
+	parserConnect.add_argument("ssid", help="The SSID to connect")
+	parserConnect.add_argument("password", nargs="?", default=None, help="A password to connect to the SSID")
 	args = parser.parse_args()
 
 	# Excecute the action
-	if args.command == "list":
-		data = actionList()
-
-	print(json.dumps(data))
+	try:
+		if args.command == "list":
+			data = actionList()
+			print(json.dumps(data))
+		elif args.command == "connect":
+			actionConnect(args.ssid, args.password)
+	except Exception as e:
+		print(e)
+		sys.exit(1)
 
 	# Clean-up the library
-	if system.destroy():
-		sys.exit(1)
 	sys.exit(0)
