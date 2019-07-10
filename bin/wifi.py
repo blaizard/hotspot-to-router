@@ -202,12 +202,12 @@ def actionList():
 			inUse = line[inUsePos[0]:inUsePos[1]].strip()
 			data.append({
 				"inUse": bool(inUse),
-				"ssid": ssid,
+				"ssid": "" if re.match(r'--', ssid) else ssid,
 				"signal": int(signal),
-				"security": str(security).lower()
+				"security": [] if re.match(r'--', security) else security.lower().split()
 			})
 
-		return data
+		return filter(lambda x: len(x["ssid"]), data)
 	else:
 		raise Exception("No interface supported")
 

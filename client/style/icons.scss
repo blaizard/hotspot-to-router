@@ -1,0 +1,56 @@
+*[class^="icon-"] {
+	min-width: 1em;
+	min-height: 1em;
+	margin-bottom: -.1em;
+
+	display: inline-block;
+	vertical-align: baseline;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+
+	-webkit-mask-size: contain;
+	-webkit-mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	mask-size: contain;
+	mask-position: center;
+	mask-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+
+	// Make it spin
+	&.icon-spin {
+		@keyframes anim-rotate {
+			0% {
+				transform: rotate(0);
+			}
+			100% {
+				transform: rotate(360deg);
+			}
+		}
+		animation: anim-rotate 2s infinite linear;
+	}
+}
+
+/**
+ * Helper to create and define icons
+ */
+@mixin defineIcon($imageUrl) {
+	background-image: url($imageUrl);
+	@supports (-webkit-mask-repeat: no-repeat) or (mask-repeat: no-repeat) {
+		background-color: currentColor;
+		background-image: none !important;
+		-webkit-mask-image: url($imageUrl);
+		mask-image: url($imageUrl);
+	}
+}
+
+// ---- Icon definitions ------------------------------------------------------
+
+$iconNames: power, thermometer-100, wifi-0, wifi-25, wifi-50, wifi-75, wifi-100, wifi-lock;
+
+@each $name in $iconNames {
+	.icon-#{$name} {
+		@include defineIcon("~[client]/style/svg/#{$name}.svg");
+	}
+}

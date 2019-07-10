@@ -1,7 +1,10 @@
 <template>
 	<div class="module">
         <div class="module-status" @click="handleClick">
-            <slot name="status">{{ title }}</slot>
+            <slot name="status">
+                <span v-if="icon" :class="icon"></span>
+                {{ title }}
+            </slot>
         </div>
         <div v-show="active" ref="body" class="module-body">
             <slot name="body" :close="handleClose"></slot>
@@ -15,6 +18,8 @@
 	export default {
         props: {
             title: {type: String, required: false, default: ""},
+            icon: {type: String, required: false, default: ""},
+            onclick: {type: Function, required: false, default: () => {}},
         },
 		data: function() {
 			return {
@@ -24,6 +29,7 @@
 		},
         methods: {
             async handleClick() {
+                this.onclick();
                 clearTimeout(this.timeoutReposition);
                 this.active = !this.active;
                 if (this.active) {
@@ -54,11 +60,12 @@
         position: relative;
 
         .module-status {
-            width: #{$client-menu-height}px;
+            min-width: #{$client-menu-height}px;
             height: #{$client-menu-height}px;
             line-height: #{$client-menu-height}px;
             text-align: center;
             padding: 0 10px;
+            white-space: nowrap;
 
             cursor: pointer;
             user-select: none;

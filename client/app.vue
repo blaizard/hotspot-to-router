@@ -1,6 +1,8 @@
 <template>
 	<div class="client-wrapper">
 		<div class="client-menu">
+			<Power class="client-menu-power"></Power>
+			<Temperature class="client-menu-temperature"></Temperature>
 			<Wifi class="client-menu-wifi"></Wifi>
 		</div>
 		<div class="client-body">
@@ -14,12 +16,14 @@
 	"use strict"
 
 	import Wifi from "./wifi.vue";
+	import Temperature from "./temperature.vue";
+	import Power from "./power.vue";
 	import Proxy from "./proxy.vue";
 	import Error from "./error.vue";
 
 	export default {
 		components: {
-			Wifi, Proxy, Error
+			Wifi, Temperature, Power, Proxy, Error
 		},
 		data: function() {
 			return {
@@ -39,6 +43,7 @@
 <style lang="scss">
 	@import "[client]/style/style.scss";
 	@import "[client]/style/config.scss";
+	@import "[client]/style/icons.scss";
 
 	html, body {
 		width: 100%;
@@ -57,6 +62,11 @@
 			height: #{$client-menu-height}px;
 			color: $client-menu-color;
 			background-color: $client-menu-background-color;
+
+			.client-menu-power,
+			.client-menu-temperature {
+				float: left;
+			}
 
 			.client-menu-wifi {
 				float: right;

@@ -1,11 +1,15 @@
 <template>
-    <Module class="wifi" title="Wifi">
+    <Module class="wifi" :icon="icon" :title="title">
         <template v-slot:body="{ close }">
-            <div v-if="stateLoading" class="module-body-list">Scanning...</div>
+            <div v-if="stateInput">
+                <div>Password: <input type="password" ref="password"/></div>
+                <div><button @click="handleNetworkConnect(needInput, close, $refs.password.value)">Connect</button></div>
+            </div>
+            <div v-else-if="stateLoading" class="module-body-list">Scanning...</div>
             <div v-else-if="stateError" class="module-body-list">Error: {{ error }}</div>
             <template v-else-if="stateData">
                 <div v-for="network in networkList" class="module-body-list" @click="handleNetworkConnect(network, close)">
-                    {{ network.ssid }}
+                    <span :class="getNetworkIcon(network)"></span> {{ network.ssid }}
                 </div>
             </template>
             <div v-else class="module-body-list">No Network</div>
@@ -17,13 +21,17 @@
 	"use strict"
 
     import Module from "./module.vue";
+    import Utility from "./utility.js";
 
 	export default {
 		data: function() {
 			return {
                 networkList: [],
                 loading: false,
-                error: null
+                title: "wifi",
+                icon: "icon-wifi-0",
+                error: null,
+                needInput: false
             };
 		},
         components: {
@@ -33,6 +41,9 @@
             this.fetchNetworkList();
         },
 		computed: {
+            stateInput() {
+                return this.needInput;
+            },
             stateLoading() {
                 return this.loading;
             },
@@ -54,24 +65,33 @@
             }
 		},
         methods: {
-            fetch(api, args = {}) {
-                return new Promise((resolve, reject) => {
-                    const query = Object.keys(args).map((key) => key + "=" + encodeURIComponent(args[key])).join("&");
-                    const url = api + ((query) ? ("?" + query) : "");
-                    fetch(url).then((data) => {
-                        return data.json();
-                    }).then((data) => {
-                        resolve(data);
-                    }).catch((e) => {
-                        reject(e);
-                    });
-                });
+            getNetworkIcon(network) {
+                let signalClass = "icon-wifi-0";
+                if (network.signal > 85) {
+                    signalClass = "icon-wifi-100";
+                }
+                else if (network.signal > 60) {
+                    signalClass = "icon-wifi-75";
+                }
+                else if (network.signal > 35) {
+                    signalClass = "icon-wifi-50";
+                }
+                else if (network.signal > 10) {
+                    signalClass = "icon-wifi-25";
+                }
+                return signalClass;
             },
             async fetchNetworkList() {
                 this.loading = true;
                 this.error = null;
                 try {
-                    this.networkList = await this.fetch("/api/v1/wifi/list");
+                    this.networkList = await Utility.fetch("/api/v1/wifi/list", {}, "json");
+                    this.networkList.forEach((network) => {
+                        if (network.inUse) {
+                            this.title = network.ssid;
+                            this.icon = this.getNetworkIcon(network);
+                        }
+                    });
                 }
                 catch (e) {
                     this.error = e;
@@ -80,11 +100,29 @@
                     this.loading = false;
                 }
             },
-            async handleNetworkConnect(network, close) {
-                close();
-                await this.fetch("/api/v1/wifi/connect", {
-                    ssid: network.ssid
-                });
+            async handleNetworkConnect(network, close, password = null) {
+                if (network.security.length > 0 && password === null) {
+                    this.needInput = network;
+                }
+                else {
+                    this.needInput = false;
+                    close();
+                    try {
+                        let query = {
+                            ssid: network.ssid
+                        };
+                        if (password) {
+                            query.password = password;
+                        }
+                        await Utility.fetch("/api/v1/wifi/connect", query);
+                        await Utility.fetch("/api/v1/proxy/goto", {
+                            url: "http://www.example.com"
+                        });
+                    }
+                    finally {
+                        await this.fetchNetworkList();
+                    }
+                }
             }
         }
     }

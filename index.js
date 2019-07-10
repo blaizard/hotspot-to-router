@@ -11,9 +11,12 @@ const FileSystem = require("./lib/filesystem.require.js");
 const BrowserProxy = require("./browser-proxy.js");
 
 // Set-up the web server
-let web = new Web(8001, {
+let web = new Web(8080, {
 	rootDir: Path.resolve(__dirname, "www")
 });
+
+let browser = new BrowserProxy();
+browser.start();
 
 // Add the various REST APIs
 web.addRoute("get", "/api/v1/wifi/list", async (request, response) => {
@@ -23,13 +26,22 @@ web.addRoute("get", "/api/v1/wifi/list", async (request, response) => {
 
 web.addRoute("get", "/api/v1/wifi/connect", async (request, response) => {
 	const ssid = request.query.ssid;
+	const password = request.query.password || null;
 
-	ChildProcess.spawnSync("python", ["./bin/wifi.py", "connect", ssid]);
+	ChildProcess.spawnSync("python", ["./bin/wifi.py", "connect", ssid].concat((password) ? [password] : []));
 	response.sendStatus(200);
 }, undefined, { exceptionGuard: true });
 
-let browser = new BrowserProxy();
-browser.start();
+web.addRoute("get", "/api/v1/temperature/get", async (request, response) => {
+	const output = ChildProcess.spawnSync("python", ["./bin/temperature.py", "get"]);
+	response.send(output.stdout.toString());
+}, undefined, { exceptionGuard: true });
+
+web.addRoute("get", "/api/v1/proxy/reset", async (request, response) => {
+	browser = new BrowserProxy();
+	await browser.start();
+	response.sendStatus(200);
+}, undefined, { exceptionGuard: true });
 
 web.addRoute("get", "/api/v1/proxy/screenshot", async (request, response) => {
 
