@@ -4,8 +4,9 @@
 			"runAsync npm run client-dev",
 			"run npm run server"
 		],
-		"build-prod": [
-			"run npm run client-prod"
+		"prod": [
+			"run npm run client-prod",
+			"daemon hotspot npm run server"
 		]
 	}
 }
