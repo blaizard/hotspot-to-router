@@ -10,8 +10,7 @@ def actionGet():
     temperature = 0
     # Should work on most linux distros
     if os.path.isdir("/sys/class/thermal"):
-        files = [f for f in os.listdir("/sys/class/thermal")]
-        for file in files:
+        for file in [f for f in os.listdir("/sys/class/thermal")]:
             if file.startswith("thermal_zone"):
                 try:
                     with open(os.path.join("/sys/class/thermal", file, "temp")) as f:

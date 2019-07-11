@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 import sys
+import os
 import re
 import json
 import argparse
@@ -183,40 +184,81 @@ def destroy():
 """
 Rescan and list all available wifi connections
 """
-def actionList():
-	if system.which("nmcli"):
+def actionListNetworks(interface):
+	networks = []
+
+	if interface == None:
+		pass
+
+	elif system.which("nmcli") :
 		# Might fail if 2 scans are done in a minimum interval
-		system.shell(["nmcli", "dev", "wifi", "rescan"], ignoreError=True)
-		output = system.shell(["nmcli", "dev", "wifi", "list"], capture=True)
+		system.shell(["nmcli", "dev", "wifi", "rescan", "ifname", interface], ignoreError=True)
+		output = system.shell(["nmcli", "-t", "-f", "ssid,active,signal,security", "dev", "wifi", "list", "ifname", interface], capture=True)
 
-		ssidPos = re.search(r'(SSID\s*)', output[0]).span()
-		signalPos = re.search(r'(SIGNAL\s*)', output[0]).span()
-		securityPos = re.search(r'(SECURITY\s*)', output[0]).span()
-		inUsePos = re.search(r'(IN-USE\s*)', output[0]).span()
-
-		data = []
-		for line in output[1:]:
-			ssid = line[ssidPos[0]:ssidPos[1]].strip()
-			signal = line[signalPos[0]:signalPos[1]].strip()
-			security = line[securityPos[0]:securityPos[1]].strip()
-			inUse = line[inUsePos[0]:inUsePos[1]].strip()
-			data.append({
-				"inUse": bool(inUse),
-				"ssid": "" if re.match(r'--', ssid) else ssid,
-				"signal": int(signal),
-				"security": [] if re.match(r'--', security) else security.lower().split()
+		for line in output:
+			items = line.split(":")
+			networks.append({
+				"inUse": bool(items[1].lower() == "yes"),
+				"ssid": items[0],
+				"signal": int(items[2]),
+				"security": False if len(items[3]) else True
 			})
 
-		return filter(lambda x: len(x["ssid"]), data)
+	elif system.which("iwlist") and system.which("iwgetid"):
+
+		output = system.shell(["iwlist", interface, "scan"], capture=True)
+		output = re.compile("^\s*Cell [0-9]+", re.MULTILINE | re.IGNORECASE).split("\n".join(output))
+
+		ssidRegexpr = re.compile("^\s*ESSID:[\s\"']*(.*?)[\s\"']*$", re.MULTILINE | re.IGNORECASE)
+		signalRegexpr = re.compile("^\s*Quality=([0-9]+)/?([0-9]+)*", re.MULTILINE | re.IGNORECASE)
+		securityRegexpr = re.compile("^\s*Encryption\s+key:\s*on", re.MULTILINE | re.IGNORECASE)
+
+		current = system.shell(["iwgetid", "-r", interface], capture=True)
+
+		for item in output:
+			match = ssidRegexpr.search(item)
+			if match:
+				ssid = match.group(1)
+				signalMatch = signalRegexpr.search(item)
+				signal = int(float(signalMatch.group(1)) / float(signalMatch.group(2)) * 100)
+				security = True if securityRegexpr.search(item) else False
+
+				networks.append({
+					"inUse": bool(ssid == current[0]),
+					"ssid": ssid,
+					"signal": int(signal),
+					"security": security
+				})
 	else:
 		raise Exception("No interface supported")
+
+	return filter(lambda x: len(x["ssid"]), networks)
+
+"""
+Rescan and list all available wifi connections
+"""
+def actionListInterfaces():
+	interfaceList = []
+
+	# Should work on most linux distros
+	# Note: /proc/net/wireless only works if the interface is connected
+	if os.path.isdir("/sys/class/net"):
+		for interface in [f for f in os.listdir("/sys/class/net")]:
+			if os.path.isdir(os.path.join("/sys/class/net", interface, "wireless")):
+				interfaceList.append(interface)
+	else:
+		raise Exception("No interface supported")
+
+	return interfaceList
 
 """
 Connect to a Wifi network
 """
-def actionConnect(ssid, password = None):
-	if system.which("nmcli"):
-		command = ["nmcli", "dev", "wifi", "connect", ssid]
+def actionConnect(interface, ssid, password = None):
+	if interface == None:
+		pass
+	elif system.which("nmcli"):
+		command = ["nmcli", "dev", "wifi", "connect", ssid, "ifname", interface]
 		if password:
 			command += ["password", password]
 		output = system.shell(command, capture=True)
@@ -230,8 +272,9 @@ if __name__ == "__main__":
 	gitlego.loader()
 
 	parser = argparse.ArgumentParser(description = "Wifi command line.")
+	parser.add_argument("-i", "--interface", default=None, help="The interface to be used, if none is set it uses the default. Also default is a valid value for this argument.")
 	subparsers = parser.add_subparsers(dest="command", help="Available commands.")
-	parserRun = subparsers.add_parser("list", help="List all available Wifi.")
+	subparsers.add_parser("list", help="List all available interfaces or all wifi networks if interface is set.")
 	parserConnect = subparsers.add_parser("connect", help="Connect to a wifi.")
 	parserConnect.add_argument("ssid", help="The SSID to connect")
 	parserConnect.add_argument("password", nargs="?", default=None, help="A password to connect to the SSID")
@@ -239,11 +282,19 @@ if __name__ == "__main__":
 
 	# Excecute the action
 	try:
+
+		# Compute the default interface if needed
+		interface = args.interface
+		if args.interface == None or args.interface == "default":
+			interfaceList = actionListInterfaces()
+			interface = interfaceList[0] if len(interfaceList) else None
+
 		if args.command == "list":
-			data = actionList()
+			data = actionListInterfaces() if args.interface == None else actionListNetworks(interface)
 			print(json.dumps(data))
 		elif args.command == "connect":
-			actionConnect(args.ssid, args.password)
+			actionConnect(interface, args.ssid, args.password)
+
 	except Exception as e:
 		print(e)
 		sys.exit(1)
