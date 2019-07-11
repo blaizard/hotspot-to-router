@@ -1,6 +1,8 @@
 "use strict";
 
 const Puppeteer = require("puppeteer");
+const Process = require("process");
+const Which = require("which");
 
 const Log = require("./lib/log.require.js")("browser-proxy");
 const Exception = require("./lib/exception.require.js")("browser-proxy");
@@ -27,7 +29,22 @@ module.exports = class BrowserProxy {
         // Clear all events
         this.event.clear();
 
-        this.browser = await Puppeteer.launch();
+        let config = {};
+        switch (Process.arch)
+        {
+        // On some architectures, the executable for chromium is not available
+        case "arm":
+        case "arm64":
+            const path = Which.sync("chromium", {nothrow: true})
+                    || Which.sync("chromium-browser", {nothrow: true})
+                    || Which.sync("google-chrome", {nothrow: true});
+            if (path) {
+                config.executablePath = path;
+            }
+            break;
+        }
+
+        this.browser = await Puppeteer.launch(config);
         this.page = await this.browser.newPage();
         this.width = 0;
         this.height = 0;

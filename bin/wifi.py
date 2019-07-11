@@ -274,7 +274,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = "Wifi command line.")
 	parser.add_argument("-i", "--interface", default=None, help="The interface to be used, if none is set it uses the default. Also default is a valid value for this argument.")
 	subparsers = parser.add_subparsers(dest="command", help="Available commands.")
-	subparsers.add_parser("list", help="List all available interfaces or all wifi networks if interface is set.")
+	subparsers.add_parser("list", help="List all available wifi networks.")
+	subparsers.add_parser("interfaces", help="List all available interfaces.")
 	parserConnect = subparsers.add_parser("connect", help="Connect to a wifi.")
 	parserConnect.add_argument("ssid", help="The SSID to connect")
 	parserConnect.add_argument("password", nargs="?", default=None, help="A password to connect to the SSID")
@@ -289,11 +290,16 @@ if __name__ == "__main__":
 			interfaceList = actionListInterfaces()
 			interface = interfaceList[0] if len(interfaceList) else None
 
+		data = None
 		if args.command == "list":
-			data = actionListInterfaces() if args.interface == None else actionListNetworks(interface)
-			print(json.dumps(data))
+			data = actionListNetworks(interface)
+		elif args.command == "interfaces":
+			data = actionListInterfaces() 
 		elif args.command == "connect":
 			actionConnect(interface, args.ssid, args.password)
+
+		if data != None:
+			print(json.dumps(data))
 
 	except Exception as e:
 		print(e)
