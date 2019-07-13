@@ -5,6 +5,7 @@
 			"run npm run server"
 		],
 		"prod": [
+			"port 80 8080",
 			"run npm run client-prod",
 			"daemon hotspot npm run server"
 		]
