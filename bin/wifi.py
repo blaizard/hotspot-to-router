@@ -257,6 +257,7 @@ Connect to a Wifi network
 def actionConnect(interface, ssid, password = None):
 	if interface == None:
 		pass
+
 	elif system.which("nmcli"):
 		command = ["nmcli", "dev", "wifi", "connect", ssid, "ifname", interface]
 		if password:
@@ -264,6 +265,13 @@ def actionConnect(interface, ssid, password = None):
 		output = system.shell(command, capture=True)
 		if not re.search(r'successfully', output[0]):
 			raise Exception(output[0])
+
+	elif system.which("iwconfig"):
+		command = ["iwconfig", interface, "essid", ssid]
+		if password:
+			command += ["key", password]
+		system.shell(command, capture=True)
+
 	else:
 		raise Exception("No interface supported")
 

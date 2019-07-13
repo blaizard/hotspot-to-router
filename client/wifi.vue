@@ -5,7 +5,7 @@
                 <div>Password: <input type="password" ref="password"/></div>
                 <div><button @click="handleNetworkConnect(needInput, close, $refs.password.value)">Connect</button></div>
             </div>
-            <div v-else-if="stateLoading" class="module-body-list">Scanning...</div>
+            <!-- <div v-else-if="stateLoading" class="module-body-list">Scanning...</div> //-->
             <div v-else-if="stateError" class="module-body-list">Error: {{ error }}</div>
             <template v-else-if="stateData">
                 <div v-for="network in networkList" class="module-body-list" @click="handleNetworkConnect(network, close)">
@@ -51,7 +51,7 @@
                 return this.error;
             },
             stateData() {
-                return !this.loading && !this.stateError && (this.networkList.length > 0);
+                return !this.stateError && (this.networkList.length > 0);
             },
             current() {
                 if (this.stateData) {
@@ -83,21 +83,42 @@
             },
             async fetchNetworkList() {
                 this.loading = true;
-                this.error = null;
                 try {
-                    this.networkList = await Utility.fetch("/api/v1/wifi/list", {}, "json");
+                    const networkList = await Utility.fetch("/api/v1/wifi/list", {}, "json");
+                    const timestamp = Date.now();
+
+                    // Merge with current networkList
+                    networkList.forEach((network) => {
+                        network.timestamp = timestamp;
+                        let value = this.networkList.find((item) => item.ssid == network.ssid);
+                        if (value) {
+                            Object.assign(value, network);
+                        }
+                        else {
+                            this.networkList.push(network);
+                        }
+                    });
+
+                    // Keep only networks that have been discovered less than 1min ago
+                    this.networkList = this.networkList.filter((network) => ((timestamp - network.timestamp) < 60 * 1000));
+
                     this.networkList.forEach((network) => {
                         if (network.inUse) {
                             this.title = network.ssid;
                             this.icon = this.getNetworkIcon(network);
                         }
                     });
+
+                    console.log(this.networkList);
+
+                    this.error = null;
                 }
                 catch (e) {
                     this.error = e;
                 }
                 finally {
                     this.loading = false;
+                    setTimeout(this.fetchNetworkList, 10 * 1000);
                 }
             },
             async handleNetworkConnect(network, close, password = null) {
