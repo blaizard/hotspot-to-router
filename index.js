@@ -8,15 +8,23 @@ const Log = require("./lib/log.require.js")("server");
 const Exception = require("./lib/exception.require.js")("server");
 const Web = require("./lib/web.require.js");
 const FileSystem = require("./lib/filesystem.require.js");
-const BrowserProxy = require("./browser-proxy.js");
+const RemoteBrowser = require("./remote-browser.js");
 
 // Set-up the web server
 let web = new Web(8080, {
 	rootDir: Path.resolve(__dirname, "www")
 });
 
-let browser = new BrowserProxy();
-browser.start();
+let browser;
+
+async function restartBrowser()
+{
+	browser = new RemoteBrowser();
+	await browser.start();
+	await browser.goto("http://neverssl.com/");
+}
+
+restartBrowser();
 
 // Add the various REST APIs
 web.addRoute("get", "/api/v1/wifi/list", async (request, response) => {
@@ -38,8 +46,7 @@ web.addRoute("get", "/api/v1/temperature/get", async (request, response) => {
 }, undefined, { exceptionGuard: true });
 
 web.addRoute("get", "/api/v1/proxy/reset", async (request, response) => {
-	browser = new BrowserProxy();
-	await browser.start();
+	await restartBrowser();
 	response.sendStatus(200);
 }, undefined, { exceptionGuard: true });
 

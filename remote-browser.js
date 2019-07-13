@@ -50,8 +50,6 @@ module.exports = class BrowserProxy {
         this.height = 0;
 
         this.event.trigger("ready");
-
-        await this.goto('http://www.google.com');
     }
 
     async stop() {
@@ -64,7 +62,7 @@ module.exports = class BrowserProxy {
     }
 
 	async setViewport(width, height) {
-        Exception.assert(this.event.is("ready"), "Module is not ready");
+        await this.waitReady();
         Exception.assert(!this.event.is("error"), "Page has error");
 
         if (this.width != width || this.height != height) {
@@ -75,6 +73,7 @@ module.exports = class BrowserProxy {
     }
 
     async selectPage(index) {
+        await this.waitReady();
         Exception.assert(this.event.is("ready"), "Module is not ready");
 
         const pages = await this.browser.pages();
@@ -85,7 +84,7 @@ module.exports = class BrowserProxy {
     }
 
     async screenshot(config) {
-        Exception.assert(this.event.is("ready"), "Module is not ready");
+        await this.waitReady();
         Exception.assert(!this.event.is("error"), "Page has error");
 
         config = Object.assign({
@@ -100,6 +99,7 @@ module.exports = class BrowserProxy {
     }
 
     async goto(url) {
+        await this.waitReady();
         Exception.assert(this.event.is("ready"), "Module is not ready");
 
         this.event.clear("error");
@@ -116,14 +116,14 @@ module.exports = class BrowserProxy {
     }
 
     async click(x, y) {
-        Exception.assert(this.event.is("ready"), "Module is not ready");
+        await this.waitReady();
         Exception.assert(!this.event.is("error"), "Page has error");
 
         await this.page.mouse.click(x, y);
     }
 
     async press(key) {
-        Exception.assert(this.event.is("ready"), "Module is not ready");
+        await this.waitReady();
         Exception.assert(!this.event.is("error"), "Page has error");
 
         await this.page.keyboard.press(key);
@@ -133,6 +133,7 @@ module.exports = class BrowserProxy {
      * Get the current status of the browser
      */
     async getStatus() {
+        await this.waitReady();
 
         // Get all open pages title
         const pageList = await this.browser.pages();

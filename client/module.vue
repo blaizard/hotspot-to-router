@@ -81,6 +81,7 @@
 			background-color: $client-menu-background-color;
 
             top: #{$client-menu-height}px;
+            z-index: 10;
 
             .module-body-list {
                 width: 100%;

@@ -1,9 +1,9 @@
 <template>
 	<div class="client-wrapper">
 		<div class="client-menu">
-			<Power class="client-menu-power"></Power>
-			<Temperature class="client-menu-temperature"></Temperature>
-			<Wifi class="client-menu-wifi"></Wifi>
+			<Power class="client-menu-power" @error="handleError"></Power>
+			<Temperature class="client-menu-temperature" @error="handleError"></Temperature>
+			<Wifi class="client-menu-wifi" @error="handleError"></Wifi>
 		</div>
 		<div class="client-body">
 			<Proxy class="client-body-proxy" @error="handleError"></Proxy>

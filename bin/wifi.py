@@ -201,7 +201,7 @@ def actionListNetworks(interface):
 				"inUse": bool(items[1].lower() == "yes"),
 				"ssid": items[0],
 				"signal": int(items[2]),
-				"security": False if len(items[3]) else True
+				"security": True if len(items[3]) > 0 else False
 			})
 
 	elif system.which("iwlist") and system.which("iwgetid"):

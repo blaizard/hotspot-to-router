@@ -12,7 +12,8 @@
 	export default {
 		data: function() {
 			return {
-                temperature: null
+                temperature: null,
+                utility: new Utility((e) => { this.$emit("error", e); })
             };
 		},
         components: {
@@ -35,7 +36,7 @@
         methods: {
             async fetchTemperature() {
                 try {
-                    this.temperature = await Utility.fetch("/api/v1/temperature/get");
+                    this.temperature = await this.utility.fetch("/api/v1/temperature/get");
                 }
 				catch(e) {
 					// ignore

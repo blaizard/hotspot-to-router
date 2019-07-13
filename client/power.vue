@@ -12,6 +12,7 @@
 	export default {
 		data: function() {
 			return {
+                utility: new Utility((e) => { this.$emit("error", e); })
             };
 		},
         components: {
@@ -19,7 +20,7 @@
         },
         methods: {
             async handleClick() {
-                await Utility.fetch("/api/v1/proxy/reset");
+                await this.utility.fetch("/api/v1/proxy/reset");
 				location.reload();
             }
         }

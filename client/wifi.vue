@@ -31,7 +31,8 @@
                 title: "wifi",
                 icon: "icon-wifi-0",
                 error: null,
-                needInput: false
+                needInput: false,
+                utility: new Utility((e) => { this.$emit("error", e); })
             };
 		},
         components: {
@@ -84,7 +85,7 @@
             async fetchNetworkList() {
                 this.loading = true;
                 try {
-                    const networkList = await Utility.fetch("/api/v1/wifi/list", {}, "json");
+                    const networkList = await this.utility.fetch("/api/v1/wifi/list", {}, "json");
                     const timestamp = Date.now();
 
                     // Merge with current networkList
@@ -109,8 +110,6 @@
                         }
                     });
 
-                    console.log(this.networkList);
-
                     this.error = null;
                 }
                 catch (e) {
@@ -122,7 +121,8 @@
                 }
             },
             async handleNetworkConnect(network, close, password = null) {
-                if (network.security.length > 0 && password === null) {
+                console.log(network);
+                if (network.security && password === null) {
                     this.needInput = network;
                 }
                 else {
@@ -135,10 +135,8 @@
                         if (password) {
                             query.password = password;
                         }
-                        await Utility.fetch("/api/v1/wifi/connect", query);
-                        await Utility.fetch("/api/v1/proxy/goto", {
-                            url: "http://www.example.com"
-                        });
+                        await this.utility.fetch("/api/v1/wifi/connect", query);
+                        await this.utility.fetch("/api/v1/proxy/reset");
                     }
                     finally {
                         await this.fetchNetworkList();

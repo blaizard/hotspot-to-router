@@ -16,6 +16,7 @@
 		},
         computed: {
             message() {
+                console.error(this.error);
                 return String(this.error.message || this.error);
             }
         }

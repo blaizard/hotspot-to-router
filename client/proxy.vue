@@ -8,6 +8,7 @@
             <input class="proxy-toolbar-send" type="button" value="OK" @click="handleUrlChange" />
         </div>
         <div class="proxy-wrapper" ref="container">
+            <div class="proxy-overlay">{{ frameRate }} FPS</div>
 	        <img class="proxy-screen" ref="screen" tabindex="0" :src="image.src" @click="handleClick($event)" @keydown="handleKeydown($event)" />
         </div>
     </div>
@@ -17,16 +18,20 @@
 	"use strict"
 
     import Url from "url";
+    import Utility from "./utility.js";
 
 	export default {
 		data: function() {
 			return {
-                refreshRateMs: 100,
+                statusRateMs: 1000,
+                screenshotRateMs: 1000,
                 image: new Image(),
                 timeoutScreenshot: null,
                 timeoutStatus: null,
                 tabList: [],
-                tabIndex: 0
+                tabIndex: 0,
+                loading: false,
+                utility: new Utility((e) => { this.$emit("error", e) })
             };
 		},
         mounted() {
@@ -38,6 +43,9 @@
             },
             screenshotHeight() {
                 return this.image.height;
+            },
+            frameRate() {
+                return parseInt(1000 / this.screenshotRateMs);
             }
 		},
         methods: {
@@ -70,16 +78,15 @@
             },
             async fetchStatus() {
                 clearTimeout(this.timeoutStatus);
-                const response = await this.fetch("status");
                 try {
-                    const status = await response.json();
+                    const status = await this.utility.fetch("/api/v1/proxy/status", {}, "json");
                     // Only update if it does not have the focus
                     if (document.activeElement !== this.$refs.url) {
                         this.$refs.url.value = status.url;
                     }
                     this.tabList = status.pages;
                     this.tabIndex = status.index;
-                    this.timeoutStatus = setTimeout(this.fetchStatus, 1000);
+                    this.timeoutStatus = setTimeout(this.fetchStatus, this.statusRateMs);
                 }
                 catch (e) {
                     this.$emit("error", e);
@@ -89,10 +96,16 @@
                 clearTimeout(this.timeoutScreenshot);
                 let image = new Image();
                 const rect = this.$refs.container.getBoundingClientRect();
+                const timeStartMs = performance.now();
                 image.src = "/api/v1/proxy/screenshot?uid=" + (Date.now()) + "&width=" + rect.width + "&height=" + rect.height;
                 image.onload = () => {
+                    const timeMs = performance.now() - timeStartMs;
+
+                    // Adjust the screenshotRateMs according to the time it takes to generate and get this screenshot
+                    this.screenshotRateMs = timeMs * 2;
+
                     this.image = image;
-                    this.timeoutScreenshot = setTimeout(this.fetchScreenshot, this.refreshRateMs);
+                    this.timeoutScreenshot = setTimeout(this.fetchScreenshot, this.screenshotRateMs);
                 }
             },
             getCoordinatesFromEvent(e) {
@@ -107,15 +120,15 @@
             },
             handleClick(e) {
                 const coord = this.getCoordinatesFromEvent(e);
-                this.fetch("click", coord);
+                this.utility.fetch("/api/v1/proxy/click", coord);
             },
             handleKeydown(e) {
-                this.fetch("press", {
+                this.utility.fetch("/api/v1/proxy/press", {
                     key: String(e.key)
                 });
             },
             selectPage(index) {
-                this.fetch("select", {
+                this.utility.fetch("/api/v1/proxy/select", {
                     index: index
                 });
             },
@@ -137,7 +150,7 @@
             async handleUrlChange() {
                 const url = this.cleanUrl(this.$refs.url.value);
                 this.$refs.url.value = url;
-                await this.fetch("goto", {
+                await this.utility.fetch("/api/v1/proxy/goto", {
                     url: url
                 });
                 this.startMonitoring();
@@ -199,6 +212,16 @@
             width: 100%;
             height: calc(100% - 64px);
             overflow: hidden;
+            position: relative;
+
+            .proxy-overlay {
+                position: absolute;
+                top: 0;
+                right: 0;
+                background-color: rgba(255, 255, 255, 0.5);
+                pointer-events: none;
+                padding: 0 5px;
+            }
 
             .proxy-screen {
                 margin: 0;
