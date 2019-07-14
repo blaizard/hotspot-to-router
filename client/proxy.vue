@@ -8,7 +8,10 @@
             <input class="proxy-toolbar-send" type="button" value="OK" @click="handleUrlChange" />
         </div>
         <div class="proxy-wrapper" ref="container">
-            <div class="proxy-overlay">{{ frameRate }} FPS</div>
+            <div class="proxy-overlay">
+                <span v-if="loading">(loading...)</span>
+                {{ frameRate }} FPS
+            </div>
 	        <img class="proxy-screen" ref="screen" tabindex="0" :src="image.src" @click="handleClick($event)" @keydown="handleKeydown($event)" />
         </div>
     </div>
@@ -80,12 +83,20 @@
                 clearTimeout(this.timeoutStatus);
                 try {
                     const status = await this.utility.fetch("/api/v1/proxy/status", {}, "json");
-                    // Only update if it does not have the focus
-                    if (document.activeElement !== this.$refs.url) {
-                        this.$refs.url.value = status.url;
+
+                    if (status.status == "up") {
+                        // Only update if it does not have the focus
+                        if (document.activeElement !== this.$refs.url) {
+                            this.$refs.url.value = status.url;
+                        }
+                        this.tabList = status.pages;
+                        this.tabIndex = status.index;
+                        this.loading = false;
                     }
-                    this.tabList = status.pages;
-                    this.tabIndex = status.index;
+                    else {
+                        this.loading = true;
+                    }
+
                     this.timeoutStatus = setTimeout(this.fetchStatus, this.statusRateMs);
                 }
                 catch (e) {

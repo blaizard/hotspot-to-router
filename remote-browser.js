@@ -133,33 +133,44 @@ module.exports = class BrowserProxy {
      * Get the current status of the browser
      */
     async getStatus() {
-        await this.waitReady();
+        try {
 
-        // Get all open pages title
-        const pageList = await this.browser.pages();
+            // Get all open pages title
+            const pageList = await this.browser.pages();
 
-        const index = pageList.findIndex((page) => (this.page === page))
+            const index = pageList.findIndex((page) => (this.page === page))
 
-        let pageTitleList = [];
-        for (const i in pageList) {
-            pageTitleList.push(await pageList[i].title());
-        }
-
-        const dimensions = await this.page.evaluate(() => {
-            return {
-                width: document.width || document.body.offsetWidth,
-                height: document.height || document.body.offsetHeight
+            let pageTitleList = [];
+            for (const i in pageList) {
+                pageTitleList.push(await pageList[i].title());
             }
-        });
 
-        return {
-            viewportWidth: this.width,
-            viewportHeight: this.height,
-            width: dimensions.width,
-            height: dimensions.height,
-            pages: pageTitleList,
-            index: index,
-            url: this.page.url()
+            const dimensions = await this.page.evaluate(() => {
+                return {
+                    width: document.width || document.body.offsetWidth,
+                    height: document.height || document.body.offsetHeight
+                }
+            });
+
+            return {
+                status: "up",
+                viewportWidth: this.width,
+                viewportHeight: this.height,
+                width: dimensions.width,
+                height: dimensions.height,
+                pages: pageTitleList,
+                index: index,
+                url: this.page.url()
+            }
+
+        }
+        catch (e) {
+            if (this.event.is("ready")) {
+                throw e;
+            }
+            return {
+                status: "down"
+            }
         }
     }
 }

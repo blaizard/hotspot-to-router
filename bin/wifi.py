@@ -209,7 +209,7 @@ def actionListNetworks(interface):
 		output = system.shell(["iwlist", interface, "scan"], capture=True)
 		output = re.compile("^\s*Cell [0-9]+", re.MULTILINE | re.IGNORECASE).split("\n".join(output))
 
-		ssidRegexpr = re.compile("^\s*ESSID:[\s\"']*(.*?)[\s\"']*$", re.MULTILINE | re.IGNORECASE)
+		ssidRegexpr = re.compile("^\s*ESSID:\s*[\"']?(.*?)\s*[\"']?\s*$", re.MULTILINE | re.IGNORECASE)
 		signalRegexpr = re.compile("^\s*Quality=([0-9]+)/?([0-9]+)*", re.MULTILINE | re.IGNORECASE)
 		securityRegexpr = re.compile("^\s*Encryption\s+key:\s*on", re.MULTILINE | re.IGNORECASE)
 
@@ -267,7 +267,7 @@ def actionConnect(interface, ssid, password = None):
 			raise Exception(output[0])
 
 	elif system.which("iwconfig"):
-		command = ["iwconfig", interface, "essid", ssid]
+		command = ["sudo", "iwconfig", interface, "essid", ssid]
 		if password:
 			command += ["key", password]
 		system.shell(command, capture=True)
