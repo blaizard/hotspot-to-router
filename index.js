@@ -26,7 +26,16 @@ async function restartBrowser()
 
 restartBrowser();
 
+/*
+"statusList": [{"uptime": 40.15963292121887, "log": "/home/blaise/projects/hotspot-to-router/.irapp/log/hotspot/8453", "pid": 8453, "cpu": 4.5, "memory": 456949760.0, "type": "daemon", "id": "hotspot", "restart": 0}], "dispatchResults": {}}
+*/
+
 // Add the various REST APIs
+web.addRoute("get", "/api/v1/apps/status", async (request, response) => {
+	const output = ChildProcess.spawnSync("python", ["./app.py", "info", "--apps", "--json"]);
+	response.send(output.stdout.toString());
+}, undefined, { exceptionGuard: true });
+
 web.addRoute("get", "/api/v1/wifi/list", async (request, response) => {
 	const output = ChildProcess.spawnSync("python", ["./bin/wifi.py", "list"]);
 	response.send(output.stdout.toString());

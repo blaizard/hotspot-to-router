@@ -3,6 +3,7 @@
 		<div class="client-menu">
 			<Power class="client-menu-power" @error="handleError"></Power>
 			<Temperature class="client-menu-temperature" @error="handleError"></Temperature>
+			<Irapps class="client-menu-irapps" @error="handleError"></Irapps>
 			<Wifi class="client-menu-wifi" @error="handleError"></Wifi>
 		</div>
 		<div class="client-body">
@@ -17,13 +18,14 @@
 
 	import Wifi from "./wifi.vue";
 	import Temperature from "./temperature.vue";
+	import Irapps from "./irapps.vue";
 	import Power from "./power.vue";
 	import Proxy from "./proxy.vue";
 	import Error from "./error.vue";
 
 	export default {
 		components: {
-			Wifi, Temperature, Power, Proxy, Error
+			Wifi, Temperature, Irapps, Power, Proxy, Error
 		},
 		data: function() {
 			return {
@@ -64,7 +66,8 @@
 			background-color: $client-menu-background-color;
 
 			.client-menu-power,
-			.client-menu-temperature {
+			.client-menu-temperature,
+			.client-menu-irapp {
 				float: left;
 			}
 

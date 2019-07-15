@@ -47,7 +47,7 @@
 
 // ---- Icon definitions ------------------------------------------------------
 
-$iconNames: power, thermometer-100, wifi-0, wifi-25, wifi-50, wifi-75, wifi-100, wifi-lock;
+$iconNames: cli, power, thermometer-100, wifi-0, wifi-25, wifi-50, wifi-75, wifi-100, wifi-lock;
 
 @each $name in $iconNames {
 	.icon-#{$name} {
