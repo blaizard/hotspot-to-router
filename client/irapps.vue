@@ -53,6 +53,9 @@
     .irapps {
         .irapp {
             float: left;
+            .module-body {
+                padding: 10px;
+            }
         }
     }
 </style>

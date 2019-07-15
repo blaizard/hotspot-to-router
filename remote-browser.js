@@ -54,7 +54,7 @@ module.exports = class BrowserProxy {
 
     async stop() {
         this.event.clear("ready");
-        await browser.close();
+        await this.browser.close();
     }
 
 	async waitReady() {

@@ -15,10 +15,13 @@ let web = new Web(8080, {
 	rootDir: Path.resolve(__dirname, "www")
 });
 
-let browser;
+let browser = null;
 
 async function restartBrowser()
 {
+	if (browser) {
+		await browser.stop();
+	}
 	browser = new RemoteBrowser();
 	await browser.start();
 	await browser.goto("http://neverssl.com/");
