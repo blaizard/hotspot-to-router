@@ -88,13 +88,21 @@ module.exports = class BrowserProxy {
         Exception.assert(!this.event.is("error"), "Page has error");
 
         config = Object.assign({
-            type: "png"
+            type: "png",
+            left: 0,
+            top: 0
         }, config);
 
         return await this.page.screenshot({
             type: config.type,
             quality: 20,
-            encoding: "binary"
+            encoding: "binary",
+            clip: {
+                x: config.left,
+                y: config.top,
+                width: this.width,
+                height: this.height
+            }
         });
     }
 
@@ -147,8 +155,8 @@ module.exports = class BrowserProxy {
 
             const dimensions = await this.page.evaluate(() => {
                 return {
-                    width: document.width || document.body.offsetWidth,
-                    height: document.height || document.body.offsetHeight
+                    width: Math.max(document.width || 0, document.body.offsetWidth || 0, document.documentElement.scrollWidth || 0),
+                    height: Math.max(document.height || 0, document.body.offsetHeight || 0, document.documentElement.scrollHeight || 0)
                 }
             });
 

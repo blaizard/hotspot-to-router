@@ -14,6 +14,14 @@
             </div>
 	        <img class="proxy-screen" ref="screen" tabindex="0" :src="image.src" @click="handleClick($event)" @keydown="handleKeydown($event)" />
         </div>
+        <div class="proxy-scrollbar-vertical">
+            <div class="proxy-cursor-up" @click="scrollVertical(-screenshotHeight / 5)"></div>
+            <div class="proxy-cursor-down" @click="scrollVertical(screenshotHeight / 5)"></div>
+        </div>
+        <div class="proxy-scrollbar-horizontal">
+            <div class="proxy-cursor-left" @click="scrollHorizontal(-screenshotWidth / 5)"></div>
+            <div class="proxy-cursor-right" @click="scrollHorizontal(screenshotWidth / 5)"></div>
+        </div>
     </div>
 </template>
 
@@ -34,7 +42,11 @@
                 tabList: [],
                 tabIndex: 0,
                 loading: false,
-                utility: new Utility((e) => { this.$emit("error", e) })
+                utility: new Utility((e) => { this.$emit("error", e) }),
+                pageHeight: 0,
+                pageWidth: 0,
+                pageOffsetHeight: 0,
+                pageOffsetWidth: 0
             };
 		},
         mounted() {
@@ -53,6 +65,8 @@
 		},
         methods: {
             startMonitoring() {
+                this.pageOffsetHeight = 0;
+                this.pageOffsetTop = 0;
                 this.fetchStatus();
                 this.fetchScreenshot();
             },
@@ -60,23 +74,6 @@
                 return {
                     "proxy-tab": true,
                     "proxy-tab-active": (this.tabIndex == index)
-                }
-            },
-            async fetch(action, args) {
-                let argList = [];
-                for (const key in args) {
-                    argList.push(key + "=" + encodeURIComponent(args[key]));
-                }
-
-                try {
-                    const response = await fetch("/api/v1/proxy/" + action + ((argList.length > 0) ? ("?" + argList.join("&")) : ""));
-                    if (!response.ok) {
-                        throw Error((await response.text()) || response.statusText);
-                    }
-                    return response;
-                }
-                catch (e) {
-                    this.$emit("error", e);
                 }
             },
             async fetchStatus() {
@@ -91,6 +88,8 @@
                         }
                         this.tabList = status.pages;
                         this.tabIndex = status.index;
+                        this.pageHeight = status.height;
+                        this.pageWidth = status.width;
                         this.loading = false;
                     }
                     else {
@@ -108,7 +107,7 @@
                 let image = new Image();
                 const rect = this.$refs.container.getBoundingClientRect();
                 const timeStartMs = performance.now();
-                image.src = "/api/v1/proxy/screenshot?uid=" + (Date.now()) + "&width=" + rect.width + "&height=" + rect.height;
+                image.src = "/api/v1/proxy/screenshot?uid=" + (Date.now()) + "&width=" + rect.width + "&height=" + rect.height + "&top=" + this.pageOffsetHeight + "&left=" + this.pageOffsetWidth;
                 image.onload = () => {
                     const timeMs = performance.now() - timeStartMs;
 
@@ -138,10 +137,18 @@
                     key: String(e.key)
                 });
             },
-            selectPage(index) {
-                this.utility.fetch("/api/v1/proxy/select", {
+            scrollVertical(inc) {
+                this.pageOffsetHeight = Math.max(0, Math.min(this.pageHeight - this.screenshotHeight, this.pageOffsetHeight + inc));
+            },
+            scrollHorizontal(inc) {
+                this.pageOffsetWidth = Math.max(0, Math.min(this.pageWidth - this.screenshotWidth, this.pageOffsetWidth + inc));
+            },
+            async selectPage(index) {
+                await this.utility.fetch("/api/v1/proxy/select", {
                     index: index
                 });
+                this.pageOffsetHeight = 0;
+                this.pageOffsetTop = 0;
             },
             cleanUrl(url) {
                 let parsedUrl = Url.parse(url);
@@ -175,16 +182,21 @@
         margin: 0;
         padding: 0;
         border: none;
+        position: relative;
 
         .proxy-tabs {
             display: flex;
             flex-flow: row nowrap;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
 
             .proxy-tab {
                 border: 1px solid #777;
                 border-bottom: none;
-                padding: 5px 10px;
-                line-height: 18px;
+                padding: 0 10px;
+                line-height: 28px;
                 font-size: 18px;
                 overflow: hidden;
                 white-space: nowrap;
@@ -201,6 +213,10 @@
         .proxy-toolbar {
             display: flex;
             flex-flow: row nowrap;
+            position: absolute;
+            top: 30px;
+            left: 0;
+            width: 100%;
 
             .proxy-toolbar-url {
                 flex: 2;
@@ -209,8 +225,8 @@
             .proxy-toolbar-url,
             .proxy-toolbar-send {
                 border: 1px solid #777;
-                padding: 5px 10px;
-                line-height: 18px;
+                padding: 0 10px;
+                line-height: 28px;
                 font-size: 18px;
             }
         }
@@ -220,15 +236,18 @@
             margin: 0;
             padding: 0;
             border: none;
-            width: 100%;
-            height: calc(100% - 64px);
+            width: calc(100% - 20px);
+            height: calc(100% - 80px);
             overflow: hidden;
-            position: relative;
+            position: absolute;
+            top: 60px;
+            left: 0;
+            width: 100%;
 
             .proxy-overlay {
                 position: absolute;
                 top: 0;
-                right: 0;
+                left: 0;
                 background-color: rgba(255, 255, 255, 0.5);
                 pointer-events: none;
                 padding: 0 5px;
@@ -238,6 +257,51 @@
                 margin: 0;
                 padding: 0;
                 border: none;
+            }
+        }
+
+        .proxy-scrollbar-vertical {
+            width: 20px;
+            height: calc(100% - 80px);
+            position: absolute;
+            top: 60px;
+            right: 0;
+
+            .proxy-cursor-up,
+            .proxy-cursor-down {
+                width: 20px;
+                height: 20px;
+                background-color: #000;
+                position: absolute;
+            }
+
+            .proxy-cursor-up {
+                top: 0;
+            }
+            .proxy-cursor-down {
+                top: 20px;
+            }
+        }
+
+        .proxy-scrollbar-horizontal {
+            width: calc(100% - 20px);
+            height: 20px;
+            position: absolute;
+            bottom: 0;
+
+            .proxy-cursor-left,
+            .proxy-cursor-right {
+                width: 20px;
+                height: 20px;
+                background-color: #000;
+                position: absolute;
+            }
+
+            .proxy-cursor-left {
+                left: 0;
+            }
+            .proxy-cursor-right {
+                right: 0;
             }
         }
     }

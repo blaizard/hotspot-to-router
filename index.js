@@ -66,11 +66,15 @@ web.addRoute("get", "/api/v1/proxy/screenshot", async (request, response) => {
 
 	const width = parseInt(request.query.width) || 800;
 	const height = parseInt(request.query.height) || 600;
+	const left = parseInt(request.query.left) || 0;
+	const top = parseInt(request.query.top) || 0;
 
 	await browser.setViewport(width, height);
 
 	const buffer = await browser.screenshot({
-		type: "jpeg"
+		type: "jpeg",
+		left: left,
+		top: top
 	});
 
 	response.setHeader("Content-Type", "image/jpeg");
