@@ -124,8 +124,8 @@
                 const scroll = {x: window.pageXOffset || document.documentElement.scrollLeft, y: window.pageYOffset || document.documentElement.scrollTop};
 
                 return {
-                    x: Math.round((coord.x - rect.x - scroll.x) * this.screenshotWidth / rect.width),
-                    y: Math.round((coord.y - rect.y - scroll.y) * this.screenshotHeight / rect.height)
+                    x: Math.round((coord.x - rect.x - scroll.x) * this.screenshotWidth / rect.width + this.pageOffsetWidth),
+                    y: Math.round((coord.y - rect.y - scroll.y) * this.screenshotHeight / rect.height + this.pageOffsetHeight)
                 };
             },
             handleClick(e) {
