@@ -93,6 +93,10 @@ module.exports = class BrowserProxy {
             top: 0
         }, config);
 
+        await this.page.evaluate(() => {
+            window.scrollTo(0, 0);
+        });
+
         return await this.page.screenshot({
             type: config.type,
             quality: 20,
@@ -128,6 +132,23 @@ module.exports = class BrowserProxy {
         Exception.assert(!this.event.is("error"), "Page has error");
 
         await this.page.mouse.click(x, y);
+
+        await this.page.evaluate((x, y) => {
+            let elt = document.getElementById("browser-proxy-pointer") || document.createElement("div");
+            elt.setAttribute("id", "browser-proxy-pointer");
+            Object.assign(elt.style, {
+                position: "absolute",
+                "z-index": 1000,
+                left: (x - 5) + "px",
+                top: (y - 5) + "px",
+                height: "10px",
+                width: "10px",
+                "border-radius": "5px",
+                "background-color": "rgba(255, 0, 0, 0.5)",
+                "user-select": "none"
+            });
+            document.body.appendChild(elt);
+        }, x, y);
     }
 
     async press(key) {

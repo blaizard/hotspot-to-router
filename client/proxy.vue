@@ -130,6 +130,7 @@
             },
             handleClick(e) {
                 const coord = this.getCoordinatesFromEvent(e);
+                console.log("click @ (" + coord.x + ", " + coord.y + ")");
                 this.utility.fetch("/api/v1/proxy/click", coord);
             },
             handleKeydown(e) {
